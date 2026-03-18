@@ -9,7 +9,7 @@ from .utilidades import create_placeholder_pixel_image
 
 class PanelCentral(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
-        super().__init__(master, fg_color=BG_COLOR, border_width=0, **kwargs)
+        super().__init__(master, fg_color="transparent", border_width=0, **kwargs)
         self.view_state = "image"
         self._construir_ui()
 

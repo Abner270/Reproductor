@@ -4,7 +4,7 @@ from .config import *
 
 class PanelDerecho(ctk.CTkFrame):
     def __init__(self, master, **kwargs):
-        super().__init__(master, fg_color=BG_COLOR, border_width=0, **kwargs)
+        super().__init__(master, fg_color="transparent", border_width=0, **kwargs) 
         self._construir_ui()
 
     def _construir_ui(self):

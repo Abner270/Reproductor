@@ -3,51 +3,51 @@ import customtkinter as ctk
 from .config import *
 
 class PanelIzquierdo(ctk.CTkFrame):
-    def __init__(self, master, **kwargs):
-        super().__init__(master, fg_color=BG_COLOR, border_width=0, **kwargs)
+    # Recibimos app_master para poder controlar la ventana principal
+    def __init__(self, master, app_master, **kwargs):
+        super().__init__(master, fg_color="transparent", border_width=0, **kwargs)
+        self.app_master = app_master
         self._construir_ui()
 
     def _construir_ui(self):
-        # Título Playlists
+        # --- SECCIÓN: MIS PLAYLISTS ---
         label = ctk.CTkLabel(self, text="// MIS PLAYLISTS", font=(FONT_FAMILY, 18, "bold"), text_color=MAGENTA_TEXT)
         label.pack(anchor="w", pady=(0, 10))
 
-        playlists = [
-            "  [chill-colab]", "  [code-and-debug]", "  [teammate-lo-fi]",
-            "  [funk-for-bugs]", "  [synthwave-neon-night]", "  [ambient-void-focus]",
-            "  [reggae-dub-break]", "  [psytrance-flow-state]", "  [classical-concerto]",
-            "  [minimal-loops-station]", "  [8bit-beats-retro]", "  [future-pop-rhythm]",
-            "  [heavy-metal-crush]", "  [data-stream-flow]"
-        ]
-        
-        # Lista scrollable de playlists
-        playlists_frame = ctk.CTkScrollableFrame(self, fg_color=BG_COLOR, width=280, height=200)
+        playlists = ["  [chill-colab]", "  [code-and-debug]", "  [teammate-lo-fi]", "  [funk-for-bugs]", "  [synthwave-neon-night]"]
+        playlists_frame = ctk.CTkScrollableFrame(self, fg_color="transparent", width=280, height=120)
         playlists_frame.pack(anchor="w", pady=(0, 20), fill="x")
         
-        for playlist_name in playlists:
-            p_label = ctk.CTkLabel(playlists_frame, text=playlist_name, font=(FONT_FAMILY, 12), text_color=GREEN_TEXT)
-            p_label.pack(anchor="w", pady=1)
+        for p in playlists:
+            ctk.CTkLabel(playlists_frame, text=p, font=(FONT_FAMILY, 12), text_color=GREEN_TEXT).pack(anchor="w", pady=1)
 
-        # Links (reproduciendo la imagen original)
-        links_frame = ctk.CTkFrame(self, fg_color=BG_COLOR)
-        links_frame.pack(anchor="w", pady=(0, 20))
+        # --- SECCIÓN: AJUSTES VISUALES EN TIEMPO REAL ---
+        ajustes_frame = ctk.CTkFrame(self, fg_color="#111111", corner_radius=8)
+        ajustes_frame.pack(anchor="w", pady=(0, 20), fill="x", ipadx=10, ipady=10)
+        
+        ctk.CTkLabel(ajustes_frame, text="// UI SETTINGS", font=(FONT_FAMILY, 14, "bold"), text_color=MAGENTA_TEXT).pack(anchor="w", pady=(0,10))
 
-        ctk.CTkLabel(links_frame, text="  [about]  [credits]  [rss.xml]", font=(FONT_FAMILY, 12), text_color=MAGENTA_TEXT).pack(anchor="w")
-        ctk.CTkLabel(links_frame, text="  [patreon]  [podcasts.apple]", font=(FONT_FAMILY, 12), text_color=GREEN_TEXT).pack(anchor="w")
-        ctk.CTkLabel(links_frame, text="  [folder.jpg]  [enterprise mode]", font=(FONT_FAMILY, 12), text_color=MAGENTA_TEXT).pack(anchor="w")
-        ctk.CTkLabel(links_frame, text="  [invert]  [fullscreen]", font=(FONT_FAMILY, 12), text_color=GREEN_TEXT).pack(anchor="w")
+        # 1. Slider Transparencia (Ventana)
+        ctk.CTkLabel(ajustes_frame, text="Ventana Alpha", font=(FONT_FAMILY, 11), text_color="white").pack(anchor="w")
+        self.slider_alpha = ctk.CTkSlider(ajustes_frame, from_=0.2, to=1.0, command=self.app_master.cambiar_opacidad, button_color=GREEN_TEXT)
+        self.slider_alpha.set(0.7) # Valor inicial
+        self.slider_alpha.pack(fill="x", pady=(0, 10))
 
-        # Stats del sistema
-        stats_frame = ctk.CTkFrame(self, fg_color=BG_COLOR)
+        # 2. Toggle Fondo (Color vs Imagen)
+        ctk.CTkLabel(ajustes_frame, text="Fondo App", font=(FONT_FAMILY, 11), text_color="white").pack(anchor="w")
+        self.btn_bg = ctk.CTkSegmentedButton(ajustes_frame, values=["Color", "Cover"], command=self.app_master.cambiar_modo_fondo, selected_color=MAGENTA_TEXT)
+        self.btn_bg.set("Color")
+        self.btn_bg.pack(fill="x", pady=(0, 10))
+
+        # 3. Slider Blur (Solo aplica si está en modo Cover)
+        ctk.CTkLabel(ajustes_frame, text="Blur Imagen", font=(FONT_FAMILY, 11), text_color="white").pack(anchor="w")
+        self.slider_blur = ctk.CTkSlider(ajustes_frame, from_=0, to=20, command=self.app_master.cambiar_blur, button_color=GREEN_TEXT)
+        self.slider_blur.set(5)
+        self.slider_blur.pack(fill="x")
+
+        # --- SECCIÓN: INFO ---
+        stats_frame = ctk.CTkFrame(self, fg_color="transparent")
         stats_frame.pack(anchor="w", pady=(0, 20))
         ctk.CTkLabel(stats_frame, text="// SYSTEM INFO", font=(FONT_FAMILY, 14, "bold"), text_color=MAGENTA_TEXT).pack(anchor="w")
-        stats_data = ["// 14 playlists", "// 650 tracks", "// 32 hours", "// 45 minutes", "// 22 seconds"]
-        for item in stats_data:
+        for item in ["// 14 playlists", "// 650 tracks"]:
             ctk.CTkLabel(stats_frame, text="  "+item, font=(FONT_FAMILY, 12), text_color=GREEN_TEXT).pack(anchor="w", pady=1)
-
-        # Snippet de código Collab
-        code_frame = ctk.CTkFrame(self, fg_color=BG_COLOR)
-        code_frame.pack(anchor="w", pady=(0, 20))
-        ctk.CTkLabel(code_frame, text="// TEAM COLLAB CODE SNIPPET", font=(FONT_FAMILY, 14, "bold"), text_color=MAGENTA_TEXT).pack(anchor="w")
-        code_text = "def find_collaborator(task='UI'):\n\treturn '// ' + task + ' teammate...';"
-        ctk.CTkLabel(code_frame, text=code_text, font=(FONT_FAMILY, 12), text_color=GREEN_TEXT, justify="left").pack(anchor="w", pady=2)
