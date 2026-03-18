@@ -32,10 +32,8 @@ def verificar_y_pedir_api():
         
         if key_ingresada:
             guardar_api_key(key_ingresada)
-            print("// API Key guardada exitosamente.")
             return key_ingresada
         else:
-            print("// ADVERTENCIA: No se ingresó API Key. Modo local activado.")
             return None
             
     return key
