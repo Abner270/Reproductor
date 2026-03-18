@@ -17,33 +17,26 @@ class CollabMusicStation(ctk.CTk):
         
         self.title("COLABORA MUSIC STATION // v0.1")
         
-        # 1. Volvemos a permitir que la ventana cambie de tamaño. 
-        # (Si bloqueamos esto, GNOME oculta los botones de maximizar/minimizar)
+        # Ventana maximizada, pero con botones de control
         self.resizable(True, True)
-
-        # 2. Ordenamos a GNOME que MAXIMICE la ventana (Pantalla completa con barra)
         try:
             if os.name == "nt":
-                self.state("zoomed") # Para Windows
+                self.state("zoomed")
             else:
-                self.attributes("-zoomed", True) # Para Linux/GNOME
+                self.attributes("-zoomed", True)
         except Exception:
-            # Plan B si falla:
             ancho = self.winfo_screenwidth()
             alto = self.winfo_screenheight()
             self.geometry(f"{ancho}x{alto}+0+0")
 
-        # Eliminamos los atajos de teclado raros que habíamos puesto
-        # ya que ahora tendrás tus botones normales.
-
         ctk.set_appearance_mode("Dark")
         self.configure(fg_color=BG_COLOR)
 
-        # Variables de estado del fondo
-        self.bg_mode = "Color"
-        self.blur_radius = 5
+        # Variables de estado
+        self.bg_mode = "Color" 
+        self.blur_radius = 15 # Valor fijo estético para el fondo
         
-        # Cargar la imagen del "Cover"
+        # Cargar imagen base
         img_data = base64.b64decode(create_placeholder_pixel_image())
         self.base_cover_image = Image.open(io.BytesIO(img_data)).convert("RGBA")
 
@@ -77,16 +70,12 @@ class CollabMusicStation(ctk.CTk):
         self.panel_derecho = PanelDerecho(self.content_grid)
         self.panel_derecho.grid(row=0, column=2, sticky="nsew", padx=10)
 
-        # Aplicar valores
-        self.aplicar_fondo()
-        
-        # Transparencia (Gnome)
+        # Transparencia general
         if os.name != "nt":
             self.attributes("-alpha", 0.70)
 
-        # Atajos de teclado por si GNOME sigue de terco
-        self.bind("<Escape>", lambda event: self.attributes("-fullscreen", False))
-        self.bind("<F11>", lambda event: self.attributes("-fullscreen", not self.attributes("-fullscreen")))
+        # Optimizacion de arranque
+        self.after(50, self.aplicar_fondo)
 
     # --- FUNCIONES EN TIEMPO REAL ---
     def cambiar_opacidad(self, valor):
@@ -97,21 +86,21 @@ class CollabMusicStation(ctk.CTk):
         self.bg_mode = modo
         self.aplicar_fondo()
 
-    def cambiar_blur(self, valor):
-        self.blur_radius = float(valor)
-        if self.bg_mode == "Cover":
-            self.aplicar_fondo()
-
     def aplicar_fondo(self):
+        """Renderiza el fondo optimizando la resolución a la pantalla actual"""
         if self.bg_mode == "Color":
             self.bg_label.configure(image=None, fg_color=BG_COLOR)
         else:
+            ancho_pantalla = self.winfo_screenwidth()
+            alto_pantalla = self.winfo_screenheight()
+
             img = self.base_cover_image.resize((100, 100))
             if self.blur_radius > 0:
                 img = img.filter(ImageFilter.GaussianBlur(self.blur_radius))
             
-            img = img.resize((2560, 1440))
-            ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=(2560, 1440))
+            img = img.resize((ancho_pantalla, alto_pantalla))
+            
+            ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=(ancho_pantalla, alto_pantalla))
             self.bg_label.configure(image=ctk_img, fg_color="transparent")
 
 if __name__ == "__main__":

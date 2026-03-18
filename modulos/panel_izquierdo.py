@@ -3,7 +3,6 @@ import customtkinter as ctk
 from .config import *
 
 class PanelIzquierdo(ctk.CTkFrame):
-    # Recibimos app_master para poder controlar la ventana principal
     def __init__(self, master, app_master, **kwargs):
         super().__init__(master, fg_color="transparent", border_width=0, **kwargs)
         self.app_master = app_master
@@ -27,10 +26,10 @@ class PanelIzquierdo(ctk.CTkFrame):
         
         ctk.CTkLabel(ajustes_frame, text="// UI SETTINGS", font=(FONT_FAMILY, 14, "bold"), text_color=MAGENTA_TEXT).pack(anchor="w", pady=(0,10))
 
-        # 1. Slider Transparencia (Ventana)
-        ctk.CTkLabel(ajustes_frame, text="Ventana Alpha", font=(FONT_FAMILY, 11), text_color="white").pack(anchor="w")
-        self.slider_alpha = ctk.CTkSlider(ajustes_frame, from_=0.2, to=1.0, command=self.app_master.cambiar_opacidad, button_color=GREEN_TEXT)
-        self.slider_alpha.set(0.7) # Valor inicial
+        # 1. Slider Transparencia (Mínimo 65%, Máximo 100%)
+        ctk.CTkLabel(ajustes_frame, text="Transparencia", font=(FONT_FAMILY, 11), text_color="white").pack(anchor="w")
+        self.slider_alpha = ctk.CTkSlider(ajustes_frame, from_=0.65, to=1.0, command=self.app_master.cambiar_opacidad, button_color=GREEN_TEXT)
+        self.slider_alpha.set(0.70) # Valor inicial al 70%
         self.slider_alpha.pack(fill="x", pady=(0, 10))
 
         # 2. Toggle Fondo (Color vs Imagen)
@@ -38,12 +37,6 @@ class PanelIzquierdo(ctk.CTkFrame):
         self.btn_bg = ctk.CTkSegmentedButton(ajustes_frame, values=["Color", "Cover"], command=self.app_master.cambiar_modo_fondo, selected_color=MAGENTA_TEXT)
         self.btn_bg.set("Color")
         self.btn_bg.pack(fill="x", pady=(0, 10))
-
-        # 3. Slider Blur (Solo aplica si está en modo Cover)
-        ctk.CTkLabel(ajustes_frame, text="Blur Imagen", font=(FONT_FAMILY, 11), text_color="white").pack(anchor="w")
-        self.slider_blur = ctk.CTkSlider(ajustes_frame, from_=0, to=20, command=self.app_master.cambiar_blur, button_color=GREEN_TEXT)
-        self.slider_blur.set(5)
-        self.slider_blur.pack(fill="x")
 
         # --- SECCIÓN: INFO ---
         stats_frame = ctk.CTkFrame(self, fg_color="transparent")
