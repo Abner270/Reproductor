@@ -4,6 +4,7 @@ from PIL import Image
 import base64
 import io
 from .config import *
+# Quitamos la importación del gato
 from .utilidades import create_placeholder_pixel_image
 
 class PanelCentral(ctk.CTkFrame):
@@ -34,9 +35,10 @@ class PanelCentral(ctk.CTkFrame):
         
         ctk.CTkLabel(self.image_frame, image=self.pixel_image, text="").pack(pady=20, expand=True)
 
-        # 2. Vista de Letras (Oculta por defecto)
+        # 2. Vista de Letras
         self.lyrics_frame = ctk.CTkFrame(self.main_content_frame, fg_color=BG_COLOR)
-        
+        self.lyrics_frame.grid_forget()
+
         lyrics_text = (
             "lost in the digital static\ncode waves crashing on the screen\n"
             "neon reflections in the matrix\ncan you hear the collaborative beat?\n\n"
@@ -50,14 +52,14 @@ class PanelCentral(ctk.CTkFrame):
         self.main_content_frame.grid_rowconfigure(0, weight=1)
         self.main_content_frame.grid_columnconfigure(0, weight=1)
 
-        # Controles
-        controls_frame = ctk.CTkFrame(self, fg_color=BG_COLOR)
-        controls_frame.pack(fill="x")
+        # Controles (Directamente debajo de la imagen/letra)
+        controls_outer_frame = ctk.CTkFrame(self, fg_color=BG_COLOR)
+        controls_outer_frame.pack(fill="x")
         
-        player_controls_frame = ctk.CTkFrame(controls_frame, fg_color=BG_COLOR)
+        # Botones de reproducción
+        player_controls_frame = ctk.CTkFrame(controls_outer_frame, fg_color=BG_COLOR)
         player_controls_frame.pack(pady=5)
         
-        # Función rápida para botones de texto monoespaciado
         def btn(text, color):
             return ctk.CTkButton(player_controls_frame, text=f" [{text}] ", font=(FONT_FAMILY, 12), text_color=color, fg_color=BG_COLOR, hover_color=BTN_HOVER_COLOR, border_width=0)
         
@@ -70,7 +72,7 @@ class PanelCentral(ctk.CTkFrame):
         btn("❤", GREEN_TEXT).pack(side="left")
         
         # Botón Toggle
-        self.toggle_btn = ctk.CTkButton(controls_frame, text="[IMAGE / LYRICS]", font=(FONT_FAMILY, 14, "bold"), text_color="#000000", fg_color=GREEN_TEXT, hover_color=MAGENTA_TEXT, corner_radius=0, command=self.toggle_lyrics_image)
+        self.toggle_btn = ctk.CTkButton(controls_outer_frame, text="[IMAGE / LYRICS]", font=(FONT_FAMILY, 14, "bold"), text_color="#000000", fg_color=GREEN_TEXT, hover_color=MAGENTA_TEXT, corner_radius=0, command=self.toggle_lyrics_image)
         self.toggle_btn.pack(pady=(20, 0))
 
     def toggle_lyrics_image(self):

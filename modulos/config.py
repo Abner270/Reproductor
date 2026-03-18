@@ -1,11 +1,11 @@
 # modulos/config.py
 
-# Paleta de colores (estilo terminal/hacker)
+# Paleta de colores (Más oscura y elegante)
 MAGENTA_TEXT = "#D100D1"
 GREEN_TEXT = "#39FF14"
-BG_COLOR = "#0A0A0A"        # Fondo principal muy oscuro
-BTN_COLOR = "#151515"       # Color de botones
-BTN_HOVER_COLOR = "#202020" # Color de botones al pasar el mouse
+BG_COLOR = "#050505"        # Negro casi absoluto para resaltar la transparencia
+BTN_COLOR = "#121212"       
+BTN_HOVER_COLOR = "#1E1E1E" 
 
-# Fuentes
-FONT_FAMILY = "Consolas"    # Fuente monoespaciada para el look de código
+# Fuente estilo Apple
+FONT_FAMILY = "Helvetica"   # Puedes cambiarlo a "SF Pro Display" si la instalas en tu sistema

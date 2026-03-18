@@ -4,6 +4,7 @@ from modulos.config import *
 from modulos.panel_izquierdo import PanelIzquierdo
 from modulos.panel_central import PanelCentral
 from modulos.panel_derecho import PanelDerecho
+import os
 
 class CollabMusicStation(ctk.CTk):
     def __init__(self):
@@ -14,6 +15,11 @@ class CollabMusicStation(ctk.CTk):
         self.geometry("1400x900")
         ctk.set_appearance_mode("Dark")
         self.configure(fg_color=BG_COLOR)
+        
+        # --- EFECTO TRANSPARENCIA (Gnome) ---
+        # Ajustado exactamente al 50% (0.50)
+        if os.name != "nt":
+             self.attributes("-alpha", 0.50) 
 
         # Header principal
         header_frame = ctk.CTkFrame(self, fg_color=BG_COLOR)
@@ -42,5 +48,6 @@ class CollabMusicStation(ctk.CTk):
         self.panel_derecho.grid(row=0, column=2, sticky="nsew", padx=10)
 
 if __name__ == "__main__":
+    api_key = None
     app = CollabMusicStation()
     app.mainloop()
