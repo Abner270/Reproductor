@@ -5,13 +5,14 @@ import io
 import os
 import threading
 import requests
-import base64 # Importación corregida
+import base64
 
 # Importación de módulos propios
 from modulos.config import *
 from modulos.panel_izquierdo import PanelIzquierdo
 from modulos.panel_central import PanelCentral
 from modulos.panel_derecho import PanelDerecho
+from modulos.panel_progreso import PanelProgreso
 from modulos.utilidades import create_placeholder_pixel_image
 from modulos.gestor_config import cargar_config, guardar_config, verificar_api_key
 from modulos.spotify_engine import conectar_spotify
@@ -26,12 +27,9 @@ class CollabMusicStation(ctk.CTk):
         # 2. CONFIGURACIÓN DE VENTANA
         self.title("COLABORA MUSIC STATION // v0.1")
         try:
-            if os.name == "nt":
-                self.state("zoomed")
-            else:
-                self.attributes("-zoomed", True)
-        except Exception:
-            self.geometry("1280x720")
+            if os.name == "nt": self.state("zoomed")
+            else: self.attributes("-zoomed", True)
+        except Exception: self.geometry("1280x720")
 
         ctk.set_appearance_mode("Dark")
         self.configure(fg_color=BG_COLOR)
@@ -41,7 +39,6 @@ class CollabMusicStation(ctk.CTk):
         self.blur_radius = 40
         self.sp = None
         
-        # Imagen base inicial (Placeholder corregido)
         placeholder_raw = base64.b64decode(create_placeholder_pixel_image())
         self.base_cover_image = Image.open(io.BytesIO(placeholder_raw))
 
@@ -49,99 +46,97 @@ class CollabMusicStation(ctk.CTk):
         self.bg_label = ctk.CTkLabel(self, text="", image=None)
         self.bg_label.place(relx=0, rely=0, relwidth=1, relheight=1)
 
-        # 5. CONFIGURACIÓN DE COLUMNAS
-        self.grid_columnconfigure(0, weight=1) 
-        self.grid_columnconfigure(1, weight=3) 
-        self.grid_columnconfigure(2, weight=2) 
-        self.grid_rowconfigure(0, weight=1)
+        # 5. CONTENEDOR DE PANELES (Superior)
+        self.content_grid = ctk.CTkFrame(self, fg_color="transparent")
+        self.content_grid.pack(expand=True, fill="both") 
+        
+        self.content_grid.grid_columnconfigure(0, weight=1) 
+        self.content_grid.grid_columnconfigure(1, weight=3) 
+        self.content_grid.grid_columnconfigure(2, weight=2) 
+        self.content_grid.grid_rowconfigure(0, weight=1)
 
         # 6. INICIALIZAR PANELES
-        # Panel Izquierdo
-        self.panel_izquierdo = PanelIzquierdo(self, self, self.config_data, width=300)
+        self.panel_izquierdo = PanelIzquierdo(self.content_grid, self, self.config_data)
         self.panel_izquierdo.grid(row=0, column=0, sticky="nsew", padx=20, pady=20)
 
-        # Panel Central (Referencia app=self añadida para evitar errores de master)
-        self.panel_central = PanelCentral(self, app=self, width=600)
+        self.panel_central = PanelCentral(self.content_grid, app=self)
         self.panel_central.grid(row=0, column=1, sticky="nsew", padx=10, pady=20)
 
-        # Panel Derecho
-        self.panel_derecho = PanelDerecho(self, width=400)
+        self.panel_derecho = PanelDerecho(self.content_grid)
         self.panel_derecho.grid(row=0, column=2, sticky="nsew", padx=20, pady=20)
 
-        # 7. CONEXIÓN Y BUCLE
+        # --- LA BARRA INFERIOR GLOBAL ---
+        self.player_bar = PanelProgreso(self, app_master=self)
+        self.player_bar.pack(side="bottom", fill="x")
+
+        # 7. CONEXIÓN Y ARRANQUE
         self.config_data = verificar_api_key(self.config_data, self)
         if self.config_data.get("client_id") and self.config_data.get("client_secret"):
             self.sp = conectar_spotify(self.config_data["client_id"], self.config_data["client_secret"])
             if self.sp:
-                print("// Conexión con Spotify establecida exitosamente.")
-                self.actualizar_loop()
+                print("// Spotify conectado.")
+                self.actualizar_loop_imagenes()   # Bucle lento (imágenes)
+                self.actualizar_estado_reproduccion() # Tu bucle rápido (tiempo)
 
-        # Aplicar transparencia y fondo inicial
         self.attributes("-alpha", self.config_data.get("alpha", 0.70))
         self.aplicar_fondo()
 
-    # --- LÓGICA DE ACTUALIZACIÓN ---
+    # --- BUCLE DE IMÁGENES (Cada 4 segundos) ---
+    def actualizar_loop_imagenes(self):
+        threading.Thread(target=self._hilo_imagenes, daemon=True).start()
+        self.after(4000, self.actualizar_loop_imagenes)
 
-    def actualizar_loop(self):
-        """Refresco constante cada 4 segundos"""
-        threading.Thread(target=self.obtener_datos_spotify, daemon=True).start()
-        self.after(4000, self.actualizar_loop)
-
-    def obtener_datos_spotify(self):
-        """Hilo secundario para no congelar la app"""
+    def _hilo_imagenes(self):
         try:
             if not self.sp: return
-            
             track = self.sp.current_user_playing_track()
-            queue = self.sp.queue()
-            
             if track and track['item']:
-                item = track['item']
-                nombre = item['name']
-                artista = item['artists'][0]['name']
-                url_img = item['album']['images'][0]['url']
-                ms_actual = track['progress_ms']
-                ms_total = item['duration_ms']
-
-                # Descargar imagen
+                url_img = track['item']['album']['images'][0]['url']
                 response = requests.get(url_img, timeout=5)
                 img_raw = Image.open(io.BytesIO(response.content))
+                queue = self.sp.queue()
                 
-                # Volver al hilo principal para tocar la UI
-                self.after(0, lambda: self.refrescar_interfaz(nombre, artista, img_raw, ms_actual, ms_total, queue))
-        except Exception as e:
-            print(f"// Error en obtención de datos: {e}")
+                self.after(0, lambda: self._refrescar_visuales(img_raw, queue))
+        except: pass
 
-    def refrescar_interfaz(self, nombre, artista, img, ms_actual, ms_total, queue_data):
-        """Actualiza todos los elementos visuales"""
-        # Actualizar Panel Central
-        if hasattr(self.panel_central, 'label_info'):
-            self.panel_central.label_info.configure(text=f"  '{nombre}' // {artista}")
+    def _refrescar_visuales(self, img, queue_data):
+        # Actualiza portada central
+        ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=(400, 400))
+        self.panel_central.label_imagen.configure(image=ctk_img)
         
-        if hasattr(self.panel_central, 'label_imagen'):
-            ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=(400, 400))
-            self.panel_central.label_imagen.configure(image=ctk_img)
-            self.panel_central.label_imagen.image = ctk_img
-
-        # Actualizar Progreso
-        if hasattr(self.panel_central, 'panel_progreso'):
-            self.panel_central.panel_progreso.actualizar_progreso(ms_actual, ms_total)
-
-        # Actualizar Panel Derecho
-        if hasattr(self.panel_derecho, 'actualizar_datos'):
-            self.panel_derecho.actualizar_datos(queue_data, img)
-
-        # Fondo dinámico
+        # Actualiza cola derecha
+        self.panel_derecho.actualizar_datos(queue_data, img)
+        
+        # Actualiza fondo
         self.base_cover_image = img
-        if self.bg_mode == "Cover":
-            self.aplicar_fondo()
+        if self.bg_mode == "Cover": self.aplicar_fondo()
 
-    # --- MÉTODOS DE CONTROL ---
+    # --- TU FUNCIÓN DE ESTADO (Cada 1 segundo) ---
+    def actualizar_estado_reproduccion(self):
+        if self.sp:
+            try:
+                track = self.sp.current_user_playing_track()
+                if track:
+                    nombre = track['item']['name']
+                    artista = track['item']['artists'][0]['name']
+                    ms_total = track['item']['duration_ms']
+                    ms_actual = track['progress_ms']
+                    
+                    # Actualizamos la barra inferior
+                    self.player_bar.actualizar_datos(nombre, artista, ms_actual, ms_total)
+                    
+                    # Sincronizamos el texto del panel central
+                    self.panel_central.label_info.configure(text=f"  '{nombre}' // {artista}")
+            except:
+                pass
+        
+        # Se repite cada segundo
+        self.after(1000, self.actualizar_estado_reproduccion)
 
+    # --- MÉTODOS DE CONFIGURACIÓN ---
     def cambiar_opacidad(self, valor):
-        val_float = float(valor)
-        self.attributes("-alpha", val_float)
-        self.config_data["alpha"] = val_float
+        self.attributes("-alpha", float(valor))
+        self.config_data["alpha"] = float(valor)
         guardar_config(self.config_data)
 
     def cambiar_modo_fondo(self, modo):
@@ -154,17 +149,13 @@ class CollabMusicStation(ctk.CTk):
         if self.bg_mode == "Color":
             self.bg_label.configure(image=None, fg_color=BG_COLOR)
         else:
-            # Procesamiento de desenfoque
             ancho_p = self.winfo_screenwidth()
             alto_p = self.winfo_screenheight()
-
-            img = self.base_cover_image.resize((150, 150)) # Resize pequeño para velocidad
+            img = self.base_cover_image.resize((100, 100))
             img = img.filter(ImageFilter.GaussianBlur(self.blur_radius))
             img = img.resize((ancho_p, alto_p))
-            
             ctk_img = ctk.CTkImage(light_image=img, dark_image=img, size=(ancho_p, alto_p))
             self.bg_label.configure(image=ctk_img)
-            self.bg_label.image = ctk_img
 
 if __name__ == "__main__":
     app = CollabMusicStation()
